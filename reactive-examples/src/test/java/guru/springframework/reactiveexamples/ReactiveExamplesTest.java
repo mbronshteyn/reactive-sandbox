@@ -4,8 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -69,10 +73,16 @@ public class ReactiveExamplesTest {
     @Test
     public void fluxTestFilter() throws Exception {
 
-        Flux<Person> people = Flux.just(michael, fiona, sam, jesse);
+        List<Person> list = Arrays.asList(michael, fiona, sam, jesse);
 
-        people.filter(person -> person.getFirstName().equals(fiona.getFirstName()))
-                .subscribe(person -> log.info(person.sayMyName()));
+        Flux<Person> people = Flux.fromIterable( list );
+
+        people
+          .parallel()
+          .runOn(Schedulers.parallel() )
+          .filter(person -> person.getFirstName().equals(fiona.getFirstName()))
+          .sequential()
+          .subscribe(person -> { log.info(person.sayMyName()); } );
 
     }
 
